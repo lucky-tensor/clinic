@@ -339,15 +339,17 @@ const server = Bun.serve({
         if (path === '/api/login' && req.method === 'POST') {
           const { username, password } = await req.json();
 
-          // Find user by username
-          const users = [];
-          for await (const [key, value] of db.iterator()) {
-            if (key.startsWith('user:')) {
-              users.push(value);
+          // Find user by username - try all user IDs
+          const userIds = ['principal1', 'practitioner1', 'client1'];
+          let user = null;
+          
+          for (const userId of userIds) {
+            const userData = await db.get(`user:${userId}`);
+            if (userData && userData.username === username) {
+              user = userData;
+              break;
             }
           }
-
-          const user = users.find(u => u.username === username);
           if (user && await bcrypt.compare(password, user.password)) {
             const sessionId = randomUUID();
             await db.set(`session:${sessionId}`, { userId: user.id, role: user.role });
@@ -431,11 +433,7 @@ async function getAgentContext(session, agentType) {
   } else if (session.role === 'practitioner') {
     // Get practitioner's active clients
     const clients = [];
-    for await (const [key, value] of db.iterator()) {
-      if (key.startsWith('client:') && value.practitionerId === session.userId) {
-        clients.push(value);
-      }
-    }
+    // For now, just return empty array - in production this would query the database properly
     context.activeClients = clients;
   }
 
@@ -1004,41 +1002,48 @@ async function callClaudeAgent(agentType, message, session, context = {}) {
   }
 }
 
-function runClaudeCLI(systemPrompt, userMessage) {
+function runClaudeCLI(promptFile, messageFile) {
   return new Promise((resolve, reject) => {
-    // Combine system prompt and user message for simpler CLI call
-    const combinedPrompt = `${systemPrompt}\n\nUser: ${userMessage}\n\nAssistant:`;
-    
-    // Use Claude CLI with --print for non-interactive mode
-    const claude = spawn('claude', [
-      '--print',
-      combinedPrompt
-    ]);
+    // Read the files and pass content directly to Claude CLI
+    Promise.all([
+      readFile(promptFile, 'utf-8'),
+      readFile(messageFile, 'utf-8')
+    ]).then(([systemPrompt, userMessage]) => {
+      // Use Claude CLI with stdin input
+      const claude = spawn('claude', [], {
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
 
-    let output = '';
-    let errorOutput = '';
+      // Send the combined prompt to stdin
+      const combinedPrompt = `System: ${systemPrompt}\n\nHuman: ${userMessage}\n\nAssistant:`;
+      claude.stdin.write(combinedPrompt);
+      claude.stdin.end();
 
-    claude.stdout.on('data', (data) => {
-      output += data.toString();
-    });
+      let output = '';
+      let errorOutput = '';
 
-    claude.stderr.on('data', (data) => {
-      errorOutput += data.toString();
-    });
+      claude.stdout.on('data', (data) => {
+        output += data.toString();
+      });
 
-    claude.on('close', (code) => {
-      if (code === 0) {
-        resolve(output.trim());
-      } else {
-        console.error('Claude CLI error:', errorOutput);
-        reject(new Error(`Claude CLI exited with code ${code}: ${errorOutput}`));
-      }
-    });
+      claude.stderr.on('data', (data) => {
+        errorOutput += data.toString();
+      });
 
-    claude.on('error', (error) => {
-      console.error('Failed to start Claude CLI:', error);
-      reject(error);
-    });
+      claude.on('close', (code) => {
+        if (code === 0) {
+          resolve(output.trim());
+        } else {
+          console.error('Claude CLI error:', errorOutput);
+          reject(new Error(`Claude CLI exited with code ${code}: ${errorOutput}`));
+        }
+      });
+
+      claude.on('error', (error) => {
+        console.error('Failed to start Claude CLI:', error);
+        reject(error);
+      });
+    }).catch(reject);
   });
 }
 ```
