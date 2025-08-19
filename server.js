@@ -224,36 +224,46 @@ async function callClaudeAgent(agentType, message, session, context = {}) {
 
 function runClaudeCLI(promptFile, messageFile) {
   return new Promise((resolve, reject) => {
-    // Use Claude CLI tool with the agent prompt as system prompt
-    const claude = spawn('claude', [
-      '--system-prompt-file', promptFile,
-      '--file', messageFile
-    ]);
+    // Read the files and pass content directly to Claude CLI
+    Promise.all([
+      readFile(promptFile, 'utf-8'),
+      readFile(messageFile, 'utf-8')
+    ]).then(([systemPrompt, userMessage]) => {
+      // Use Claude CLI with stdin input
+      const claude = spawn('claude', [], {
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
 
-    let output = '';
-    let errorOutput = '';
+      // Send the combined prompt to stdin
+      const combinedPrompt = `System: ${systemPrompt}\n\nHuman: ${userMessage}\n\nAssistant:`;
+      claude.stdin.write(combinedPrompt);
+      claude.stdin.end();
 
-    claude.stdout.on('data', (data) => {
-      output += data.toString();
-    });
+      let output = '';
+      let errorOutput = '';
 
-    claude.stderr.on('data', (data) => {
-      errorOutput += data.toString();
-    });
+      claude.stdout.on('data', (data) => {
+        output += data.toString();
+      });
 
-    claude.on('close', (code) => {
-      if (code === 0) {
-        resolve(output.trim());
-      } else {
-        console.error('Claude CLI error:', errorOutput);
-        reject(new Error(`Claude CLI exited with code ${code}: ${errorOutput}`));
-      }
-    });
+      claude.stderr.on('data', (data) => {
+        errorOutput += data.toString();
+      });
 
-    claude.on('error', (error) => {
-      console.error('Failed to start Claude CLI:', error);
-      reject(error);
-    });
+      claude.on('close', (code) => {
+        if (code === 0) {
+          resolve(output.trim());
+        } else {
+          console.error('Claude CLI error:', errorOutput);
+          reject(new Error(`Claude CLI exited with code ${code}: ${errorOutput}`));
+        }
+      });
+
+      claude.on('error', (error) => {
+        console.error('Failed to start Claude CLI:', error);
+        reject(error);
+      });
+    }).catch(reject);
   });
 }
 
