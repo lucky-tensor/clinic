@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Psychology Clinic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'poppins': ['Poppins', 'sans-serif'],
+                        'roboto': ['Roboto', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#8B5CF6',
+                        accent: '#10B981'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+</head>
+<body class="font-roboto bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div id="app" class="min-h-screen">
+        <!-- Login Screen -->
+        <div id="login-screen" class="flex items-center justify-center min-h-screen">
+            <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg w-96">
+                <h1 class="font-poppins text-2xl font-bold text-center mb-6">AI Psychology Clinic</h1>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Username</label>
+                        <input type="text" id="username" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium mb-2">Password</label>
+                        <input type="password" id="password" class="w-full p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600" required>
+                    </div>
+                    <button type="submit" class="w-full bg-primary text-white p-3 rounded-lg hover:bg-blue-600">Login</button>
+                </form>
+                <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                    <p>Demo accounts:</p>
+                    <p>Admin: admin/admin123</p>
+                    <p>Therapist: therapist/therapist123</p>
+                    <p>Client: client/client123</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Application -->
+        <div id="main-app" class="hidden">
+            <!-- Navigation -->
+            <nav class="bg-white dark:bg-gray-800 shadow-sm border-b">
+                <div class="max-w-7xl mx-auto px-4">
+                    <div class="flex justify-between h-16">
+                        <div class="flex items-center">
+                            <h1 class="font-poppins text-xl font-bold">AI Psychology Clinic</h1>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                                <i data-feather="sun" class="hidden dark:block"></i>
+                                <i data-feather="moon" class="block dark:hidden"></i>
+                            </button>
+                            <span id="user-role" class="text-sm font-medium"></span>
+                            <button id="logout-btn" class="text-sm text-red-600 hover:text-red-700">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content Area -->
+            <div class="max-w-7xl mx-auto px-4 py-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Sidebar -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <h2 class="font-poppins text-lg font-semibold mb-4">Available Actions</h2>
+                            <div id="action-buttons" class="space-y-2"></div>
+                        </div>
+                    </div>
+
+                    <!-- Main Content -->
+                    <div class="lg:col-span-2">
+                        <!-- Chat Interface -->
+                        <div id="chat-section" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 hidden">
+                            <h2 class="font-poppins text-lg font-semibold mb-4" id="chat-title">Chat</h2>
+                            <div id="chat-messages" class="h-96 overflow-y-auto mb-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                                <!-- Messages will appear here -->
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="text" id="chat-input" placeholder="Type your message..."
+                                       class="flex-1 p-3 border rounded-lg dark:bg-gray-700 dark:border-gray-600">
+                                <button id="send-btn" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-600">Send</button>
+                            </div>
+                        </div>
+
+                        <!-- Dashboard -->
+                        <div id="dashboard" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                            <h2 class="font-poppins text-lg font-semibold mb-4">Dashboard</h2>
+                            <div id="dashboard-content">
+                                <p class="text-gray-600 dark:text-gray-400">Welcome! Select an action from the sidebar to get started.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/public/app.js"></script>
+</body>
+</html>
